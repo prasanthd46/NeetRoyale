@@ -6,8 +6,8 @@ const LeaderBoard =()=>{
     const scores = location.state || {}
     console.log(location.state)
     console.log(scores)
-    return <div className="bg-dark">
-      
+    return <div className="bg-black h-screen text-white">
+      <Navbar />
       <div>
     <div>
         <div>
