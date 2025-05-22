@@ -26,7 +26,7 @@ type playerTimer = {
     interval : ReturnType<typeof setInterval>
 }
 type room = {
-    
+    host    : string,
     players : string[],
     scores :Record<string,number>,
     lifelines: Record<string,boolean>,
@@ -88,6 +88,7 @@ io.on('connection',(socket)=>{
              callback({status:'error',message:'Room already exists',rid:roomId})
         }else{
             rooms[roomId] = {
+                host:socket.id,
                 players:[socket.id],
                 scores:{[socket.id]:0},
                 lifelines:{[socket.id]:true},
@@ -108,9 +109,24 @@ io.on('connection',(socket)=>{
         }
         console.log(roomId+"create room room id")
         socket.join(roomId)
-        callback({status:'ok',roomId})
-        io.to(roomId).emit('playerJoined',rooms[roomId].players)
-    })
+        io.to(roomId).emit('playerJoined',{players:rooms[roomId].players,host:rooms[roomId].host})
+        callback({status:'ok',roomId,host:rooms[roomId].host})
+    })  
+        socket.on('leaveRoom',(roomId:string,callback)=>{
+            const room = rooms[roomId]
+            if(room){
+                room.players = [...room.players.filter(player => player != socket.id)]
+                if(room.host === socket.id){
+                    if(room.players[0]){
+                        room.host = room.players[0]
+                    }else{
+                        console.log("No one in this room")
+                        //WIP : Have to emit the message  and display it on screen to user from socket
+                    }
+                }
+                socket.to(roomId).emit('playerJoined',{players:room.players,host:rooms[roomId].host})
+            }
+        })
         socket.on('joinRoom',(roomId:string,callback)=>{
             const room  = rooms[roomId]
           
@@ -130,14 +146,31 @@ io.on('connection',(socket)=>{
                     freezeOpponent: {Available:false,Usage:false}
                 }
                 socket.join(roomId)
-                io.to(roomId).emit('playerJoined',room.players)
-                callback({status:"ok",roomId,maxplayers:room.maxplayers})
+                io.to(roomId).emit('playerJoined',{players:room.players,host:room.host})
+                callback({status:"ok",roomId,maxplayers:room.maxplayers,host:room.host})
             }else{
                 callback({status:"error",message:"room full or does not exist"})
             }
         })
   
     socket.on('startGame',(roomId)=>{
+        const room = rooms[roomId]
+        console.log(room)
+        if(room){
+            if(room.round == 1 ){
+                const newQues = questions.map((ques)=> {
+                    return {
+                     question:ques.question,
+                     options:ques.options
+                    }
+                })
+                io.to(roomId).emit('gameStart')
+                console.log(newQues)
+        }
+           
+        }
+    })
+    socket.on('readyForQuestion',(roomId)=>{
         const room = rooms[roomId]
         console.log(room)
         if(room){

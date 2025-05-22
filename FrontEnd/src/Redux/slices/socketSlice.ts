@@ -1,23 +1,28 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit"
 
 interface SocketState{
+    host:string
     roomId :string | null
     players :string[]
     scores : Record<string,number>
     lifelines :Record<string,boolean>
-    currentQuestion :string | null
+   
 }
 const initialState:SocketState = {
+    host:'',
     roomId:null,
     players:[],
     scores:{},
     lifelines:{},
-    currentQuestion:null,
+   
 }
 export const socketSlice = createSlice({
     name:"socket",
     initialState,
     reducers:{
+        setHost:(state,action:PayloadAction<string>)=>{
+            state.host = action.payload
+        },
         setRoomId:(state,action:PayloadAction<string>)=>{
             state.roomId = action.payload
         },
@@ -34,6 +39,7 @@ export const socketSlice = createSlice({
 
 })
 export const {
+    setHost,
     setRoomId,
     setPlayers,
     setLifelines,
