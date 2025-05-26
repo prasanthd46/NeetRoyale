@@ -3,7 +3,7 @@ import  socketReducer  from "./slices/socketSlice"
 
 export const store = configureStore({
     reducer:{
-       socket:socketReducer 
+       socketRoom:socketReducer 
     }
 })
 export type RootState = ReturnType <typeof store.getState>

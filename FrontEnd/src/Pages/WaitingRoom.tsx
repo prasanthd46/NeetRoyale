@@ -1,34 +1,38 @@
 import {useState,useEffect} from "react"
 import {useNavigate}  from "react-router-dom"
-import { getSocket } from "../socket/socket"
+
 import {useAppDispatch, useAppSelector } from "../Redux/hooks"
 import CircleQuarter from "../Components/CircleQuarter"
 import Banner from "../Components/Banner"
 import { Dispatch } from "@reduxjs/toolkit"
 import { setPlayers } from "../Redux/slices/socketSlice"
+import { useSocket } from "../providers/socketProvider"
 const WaitingRoom =()=>{
-    const roomId = useAppSelector((state)=> state.socket.roomId)
-    const players = useAppSelector((state)=> state.socket.players)
-    console.log(players)
+    const roomId = useAppSelector((state)=> state.socketRoom.roomId)
+    const players = useAppSelector((state)=> state.socketRoom.players)
+    const host = useAppSelector((state)=> state.socketRoom.host)
+    const roomSize = useAppSelector((state)=> state.socketRoom.roomSize)
+
     const [count,setCount] = useState<number>(4)
-    const socket = getSocket()
-    const playerSocketId = socket.id 
+    const [rotateFlag,setRotateFlag] = useState<boolean>(false)
+    
+    const socket = useSocket()
     const dispatch = useAppDispatch()
+    const navigate = useNavigate()
+    
+    const playerSocketId = socket?.id 
+    
     const startGame = ():Promise<void>=>{
         return new Promise((resolve)=>{
-        socket.emit('startGame',roomId)
+        socket?.emit('startGame',roomId)
         resolve()
     })
     }
-    const [flag,setFlag] = useState<boolean>(false)
     
     const leaveGame = ()=>{
-            socket.emit('leaveRoom',roomId)
+            socket?.emit('leaveRoom',roomId)
     }
-    console.log(players)
-    console.log("here man")
-    const host = useAppSelector((state)=> state.socket.host)
-    console.log(host)
+
     const bannerPosition = (index:number)=>{
        let arr:any[]=[]
        if(index>2){
@@ -47,28 +51,29 @@ const WaitingRoom =()=>{
        }  
         return arr
     }
+
     let arr = bannerPosition(players.length) 
-    console.log(players)
-    console.log("dont know dont know ")
-    const navigate = useNavigate()
+    
     useEffect(()=>{
-        socket.on('playerJoined',(response)=>{
+        socket?.on('playerJoined',(response)=>{
+            console.log(response)
+            console.log(response.players)
             dispatch(setPlayers(response.players))
         })
         return ()=>{
-            socket.off('playerJoined')
+            socket?.off('playerJoined')
         }
-    },[])
+    },[socket,players])
 
     useEffect(()=>{
-        socket.on('gameStart',()=>{
-            setFlag(true)
+        socket?.on('gameStart',()=>{
+            setRotateFlag(true)
             const interval = setInterval(()=>{
                 setCount((num)=> {
                 if(num <0){
                     clearInterval(interval)
-                    setFlag(false)
-                    socket.emit('readyForQuestion',roomId)
+                    setRotateFlag(false)
+                    socket?.emit('readyForQuestion',roomId)
                     navigate('/game')
                 }
                 return num-1
@@ -78,29 +83,37 @@ const WaitingRoom =()=>{
         })
         return ()=>{
             
-            socket.off('gameStart')
+            socket?.off('gameStart')
         }
-    },[])
+    },[socket,players])
     
     
-    return <div className="bg-black h-[1000px]  ">
+    return <div className="bg-black h-screen">
         <div className="h-full flex flex-col">
             <div className="flex justify-between px-15 mr-10 items-center">
-                <div className="flex justify-start items-center pb-4  font-mono w-[40%] text-6xl font-extrabold text-purple-500  drop-shadow-[0_0_10px_rgba(168,85,247,0.7)]  h-[130px] mt-15 ">{/*Margin could be changed according to ur wish coz i did on spot for functional-priorities completion*/}
+                <div className="flex justify-start items-center pb-4  font-mono w-[40%] text-6xl font-extrabold text-purple-500  drop-shadow-[0_0_10px_rgba(168,85,247,0.7)]  h-[130px] mt-10 ">
                     Game Lobby
                 </div>
-                
-                <div className="text-2xl  text-white font-mono w-[30%] flex items-center justify-center">
-                    Host By : {host}
+                <div className="flex flex-col gap-2 mt-10 justify-end">
+                    <div className="text-xl  text-white font-mono tracking-widest  flex items-center justify-center">
+                        Host By : {host}
+                    </div>
+                    <div className="text-xl font-mono text-white flex gap-4">
+                        <span>Room Size : </span><span>{roomSize}</span>
+                    </div>
+                    <div className="text-white text-xl  font-mono  ">
+                         No of Players : {players.length}
+                    </div>  
                 </div>
             </div>
-            <div className="border-3 flex flex-col border-[#303030] rounded m-10 h-full ">
-                <div className=" h-full">
+            <div className="border-3 flex flex-col  rounded m-10 ">
+                
+                <div className="mb-30">
                     <div className="flex justify-evenly">
                         
                         {players && players.map((player,index)=>{
                              
-                            return <div className={`pt-10 `}>
+                            return <div className={`pt-5 `}>
                                     <Banner />
                                      <div key={index} className="mt-5 text-white">
                                          {player}                                     
@@ -135,7 +148,7 @@ const WaitingRoom =()=>{
                         }
                     </div>
                     <div className="flex items-center">
-                        <CircleQuarter flag={false} rotate={flag}/>
+                        <CircleQuarter flag={false} rotate={rotateFlag}/>
                     </div>
                 </div>
                 <div className="flex justify-end mr-3 text-neutral-500 ">

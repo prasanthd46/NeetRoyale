@@ -1,4 +1,5 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit"
+import { Socket } from "socket.io-client"
 
 interface SocketState{
     host:string
@@ -6,7 +7,8 @@ interface SocketState{
     players :string[]
     scores : Record<string,number>
     lifelines :Record<string,boolean>
-   
+    roomSize :number
+
 }
 const initialState:SocketState = {
     host:'',
@@ -14,12 +16,17 @@ const initialState:SocketState = {
     players:[],
     scores:{},
     lifelines:{},
-   
+    roomSize:0,
+
 }
 export const socketSlice = createSlice({
-    name:"socket",
+    name:"socketRoom",
     initialState,
     reducers:{
+        
+        setRoomSize:(state,action:PayloadAction<number>)=>{
+            state.roomSize = action.payload
+        },
         setHost:(state,action:PayloadAction<string>)=>{
             state.host = action.payload
         },
@@ -39,6 +46,8 @@ export const socketSlice = createSlice({
 
 })
 export const {
+
+    setRoomSize,
     setHost,
     setRoomId,
     setPlayers,

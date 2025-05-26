@@ -3,6 +3,7 @@ import {Server} from "socket.io"
 import http from "http"
 import cors from "cors"
 import { convertToObject } from "typescript";
+import { initSocket } from "./middleware";
 
 const app = express();
 const server = http.createServer(app);
@@ -10,13 +11,7 @@ app.use(cors({
     origin:"http://localhost:5173",
     credentials:true
 }))
-const io = new Server(server,{
-    cors:{
-        origin:"http://localhost:5173",
-        methods:["GET","POST"],
-        credentials:true
-    }
-});
+const io = initSocket(server)
 type powerUpType = 'doublePoints' | 'extraTime' | 'hint' | "freezeOpponent"
 type playerPowerUps ={
     [key in powerUpType]? : {Available:boolean,Usage:boolean}
@@ -83,7 +78,7 @@ io.on('connection',(socket)=>{
     let doublePoints = false;
     socket.on('createRoom',(maxPlayers:number,callback)=>{
         const roomId = Math.random().toString(36).substring(2,8)
-        console.log(roomId)
+
         if(rooms[roomId]){
              callback({status:'error',message:'Room already exists',rid:roomId})
         }else{
@@ -109,6 +104,8 @@ io.on('connection',(socket)=>{
         }
         console.log(roomId+"create room room id")
         socket.join(roomId)
+        console.log(rooms[roomId].players)
+        
         io.to(roomId).emit('playerJoined',{players:rooms[roomId].players,host:rooms[roomId].host})
         callback({status:'ok',roomId,host:rooms[roomId].host})
     })  
@@ -289,7 +286,6 @@ io.on('connection',(socket)=>{
                 }
             }
             console.log(room)
-            console.log('submit answer thala')
             io.to(socket.id).emit('powerUps',powers)
             room.round++;
         }else{
@@ -326,36 +322,7 @@ io.on('connection',(socket)=>{
         }
         console.log(room.scores[socket.id])
     })
-        
-
-        
     
-    // socket.on('powerUp',(roomId:string,powerUpType:powerUpType)=>{
-    //     const room = rooms[roomId]
-    //     const playerPowerUps = room.powerups[socket.id][powerUpType]
-    //     if(playerPowerUps){
-    //         console.log("yh using powerUp"+powerUpType)
-        
-    //     switch(powerUpType){
-    //         case "doublePoints":
-    //             playerPowerUps.Usage = true;
-    //             break;
-    //         case "extraTime":
-    //             playerPowerUps.Usage  = true;
-    //             break;
-    //         case "freezeOpponent":
-    //             playerPowerUps.Usage  = true;
-    //             break;
-    //         case "hint":
-    //             playerPowerUps.Usage  = true;
-    //             break;
-    //         default :
-    //             socket.emit('powerUp',{reason:'Invalid didnt get powerUps usage'})
-    //             console.log("sorry bro i didnt get powerUps")
-            
-    //     }
-    // } 
-    // })
     socket.on('powerUpActivated',(roomId:string,powerUpType:powerUpType,targetId:string)=>{
         const room = rooms[roomId]
         console.log(roomId)
