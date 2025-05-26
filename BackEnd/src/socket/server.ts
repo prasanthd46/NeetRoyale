@@ -300,7 +300,7 @@ io.on('connection',(socket)=>{
                    doublePoints.Available=false
                    doublePoints.Usage=false
                }else{
-                   console.log("hi in round2 answer validation")
+                   console.log("round2 answer validation")
                    room.scores[socket.id]+=10
                }
             }  
@@ -327,7 +327,7 @@ io.on('connection',(socket)=>{
         const room = rooms[roomId]
         console.log(roomId)
         console.log(room)
-        console.log('here boyyyyajasbhdajhlsb')
+        
         console.log(room.powerups)
         const playerPowerUps= room.powerups[socket.id][powerUpType]
         
@@ -356,11 +356,11 @@ io.on('connection',(socket)=>{
                     break;
                 case "hint":
                     playerPowerUps.Available= false;
-                    io.to(socket.id).emit('powerUpReceived',{hint:"hi namaste bye"})
+                    io.to(socket.id).emit('powerUpReceived',{hint:"Its about a geographical bio-plant"})
                     break;
                 default :
-                    socket.emit('powerUp',{reason:'Invalid didnt get powerUps usage'})
-                    console.log("sorry bro i didnt get powerUps")
+                    socket.emit('powerUp',{reason:'Invalid, didnt get powerUps usage'})
+                    console.log("Didnt get powerUps")
                 
             }
         }
